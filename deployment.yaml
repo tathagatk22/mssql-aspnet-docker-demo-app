@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dotnet-app-deploy
+  labels:
+    app: dotnet-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dotnet-app
+  template:
+    metadata:
+      labels:
+        app: dotnet-app
+    spec:
+      containers:
+      - name: dotnet-app
+        imagePullPolicy: Always
+        image: tathagatk22/dotnet-webapp:v10
+        ports:
+          - containerPort: 80
+        env:
+        - name: DatabaseServer
+          value: "mssql"
+        - name: DatabaseName
+          value: "mydb"
+        - name: DatabaseUser
+          value: "sa"
+        - name: DatabaseUserPassword
+          value: "Yukon900"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dotnet-app-svc
+spec:
+  type: LoadBalancer
+  ports:
+  - protocol: TCP
+    port: 80
+  selector:
+    app: dotnet-app
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mssql
+  labels:
+    app: mssql
+spec:
+  ports:
+    - port: 1433
+  selector:
+    app: mssql
+---
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: mssql
+  labels:
+    app: mssql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mssql
+  template:
+    metadata:
+      labels:
+        app: mssql
+    spec:
+      containers:
+      - image: microsoft/mssql-server-windows-express
+        imagePullPolicy: Always
+        name: mssql
+        env:
+        - name: SA_PASSWORD
+          value: "Yukon900"
+        - name: ACCEPT_EULA
+          value: "Y"
+        ports:
+        - containerPort: 1433
